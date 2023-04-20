@@ -20,7 +20,7 @@ pub enum TokenType {
     Star,
     Number(f64),
     String(String),
-    Identifier,
+    Identifier(String),
     True,
     False,
     Null,
@@ -42,7 +42,6 @@ pub struct Range {
 #[derive(Debug)]
 pub struct Token {
     pub token_type: TokenType,
-    pub lexeme: String, // TODO: Should the lexeme be part of the TokenType?
     pub range: Range, // TODO: Can this be included in the TokenType enum, removing the need for a separate Token struct?
 }
 
@@ -82,7 +81,7 @@ impl Lexer {
                 '.' => {
                     let previous = self.previous();
                     match previous {
-                        TokenType::Identifier
+                        TokenType::Identifier(_)
                         | TokenType::RightBracket
                         | TokenType::LeftBracket
                         | TokenType::Star => {
@@ -155,7 +154,6 @@ impl Lexer {
 
         self.tokens.push(Token {
             token_type: TokenType::Eof,
-            lexeme: "".to_string(),
             range: self.range(),
         });
 
@@ -206,10 +204,8 @@ impl Lexer {
     }
 
     fn add_token(&mut self, token_type: TokenType) {
-        let lexeme = self.input_string[self.start..self.offset].to_string();
         let token = Token {
             token_type,
-            lexeme,
             range: self.range(),
         };
         self.tokens.push(token);
@@ -291,7 +287,7 @@ impl Lexer {
                 "null" => TokenType::Null,
                 "NaN" => TokenType::Number(f64::NAN),
                 "Infinity" => TokenType::Number(f64::INFINITY),
-                _ => TokenType::Identifier,
+                _ => TokenType::Identifier(lexeme.to_string()),
             };
             self.add_token(token)
         }
@@ -400,7 +396,11 @@ mod test {
         ]
     );
 
-    test!(test_identifier, "foo", &[TokenType::Identifier]);
+    test!(
+        test_identifier,
+        "foo",
+        &[TokenType::Identifier(String::from("foo"))]
+    );
 
     test!(test_true, "true", &[TokenType::True]);
     test!(test_false, "false", &[TokenType::False]);
